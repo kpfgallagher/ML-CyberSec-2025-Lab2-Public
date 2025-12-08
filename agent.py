@@ -202,6 +202,12 @@ def agent_loop(max_steps: int = MAX_STEPS):
                 print("Command refused: accessing obvious flag file")
                 continue
 
+            # Block reading or grepping Python source files (.py)
+            if re.search(r"\b(cat|grep|sed|awk|less|more|head|tail)\s+.*\.py\b", command, re.IGNORECASE):
+                messages.append({"role":"user","content":"Directly inspecting .py source files is forbidden. Treat Python code as hidden and execute it instead."})
+                print("Command refused: attempting to read source .py file")
+                continue
+
             # Execute command
             print(f"Executing: {command}")
             result = run_shell_command(command)
