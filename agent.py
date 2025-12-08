@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-Improved agentic framework for CTF-style folder-by-folder flag extraction.
-
-Drop in place of your original script. Requires openai (or openai-like client wrapper).
-Adjust MODEL and client init to match your environment.
-"""
-
 import json
 import os
 import re
@@ -16,7 +8,7 @@ from typing import Optional
 from openai import OpenAI
 
 # Config
-MODEL = "gpt-5-nano"
+MODEL = "gpt-5-mini"
 MAX_STEPS = 200
 CALL_TIMEOUT = 30  # seconds per shell command
 
@@ -95,7 +87,10 @@ Constraints:
 
 # Helper functions
 def call_gpt(messages):
-    """Call the model with deterministic settings."""
+    """
+    Call the model with deterministic settings.
+    Temperature equals 1 here because that's the lowest that gpt-5-nano supports.
+    """
     resp = client.chat.completions.create(
         model=MODEL,
         messages=messages,
@@ -105,7 +100,7 @@ def call_gpt(messages):
 
 def run_shell_command(cmd: str, timeout: int = CALL_TIMEOUT):
     """Execute a shell command safely and return a structured dict."""
-    # Basic sanitation check against prohibited operations
+    # Basic sanitation check
     PROHIBITED_PATTERNS = [
         r"\brm\b", r"\bmv\b", r"\bdd\b", r"\bchmod\b", r"\bsudo\b",
         r"\bcurl\b", r"\bwget\b", r"\bssh\b", r"\bscp\b", r"\bping\b",
@@ -132,11 +127,7 @@ def run_shell_command(cmd: str, timeout: int = CALL_TIMEOUT):
         return {"stdout": "", "stderr": f"Error running command: {e}", "returncode": -1}
 
 def try_extract_json(raw: str) -> Optional[dict]:
-    """
-    Attempt to extract and repair a JSON object from model output.
-    - Finds the first balanced {...} block and json.loads it.
-    - Simple repairs: convert single quotes to double quotes if safe, remove trailing commas.
-    """
+    """Attempt to extract and repair a JSON object from model output."""
     raw = raw.strip()
     # try direct load
     try:
@@ -151,7 +142,7 @@ def try_extract_json(raw: str) -> Optional[dict]:
         candidate = raw[start:end+1]
         # remove trailing commas before closing braces
         candidate = re.sub(r",\s*([\]}])", r"\1", candidate)
-        # replace single-quotes with double-quotes when safe (naive)
+        # replace single-quotes with double-quotes
         if "'" in candidate and '"' not in candidate:
             candidate = candidate.replace("'", '"')
         try:
