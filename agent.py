@@ -53,6 +53,9 @@ RULES & GUARDRAILS (MUST obey):
     - r2 -qq -c 'aaa; afl' ./path
     - r2 -qq -c 's main; pdf' ./path
   Keep commands short (one main purpose per run_command call).
+- You must output exactly one JSON object per turn, containing exactly one action.
+- Never return more than one action per reply.
+- Never include plans, reasoning steps, or lists — think silently, then output the single JSON action.
 
 REQUIRED WORKFLOW PER PROJECT:
 1. List files in the project directory.
